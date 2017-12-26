@@ -4996,7 +4996,20 @@ void home_all_axes() { gcode_G28(true); }
               if (!position_is_reachable_by_probe_xy(xProbe, yProbe)) continue;
             #endif
 
-            measured_z = faux ? 0.001 * random(-100, 101) : probe_pt(xProbe, yProbe, stow_probe_after_each, verbose_level);
+            // Multiple Z probes
+            int8_t numMeasurements = 1;
+            #if defined(ABL_NUM_PROBE_MEASUREMENTS)
+              numMeasurements = ABL_NUM_PROBE_MEASUREMENTS;
+            #endif
+
+            for(uint8_t i = 0; i < numMeasurements; i++)
+            {
+              float measurement = faux ? 0.001 * random(-100, 101) : probe_pt(xProbe, yProbe, stow_probe_after_each, verbose_level); 
+              measured_z += measurement;
+            }
+
+            measured_z /= numMeasurements;
+            // End multiple Z probes
 
             if (isnan(measured_z)) {
               planner.abl_enabled = abl_should_enable;
